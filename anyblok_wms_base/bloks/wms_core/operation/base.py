@@ -136,16 +136,17 @@ class Operation:
                        # TODO this should be the same table as
                        # WorkingOn model
                        join_model=Wms.WorkingOn,
-                       m2m_remote_columns='goods_id',
-                       m2m_local_columns='acting_op_id',
+                       compute_join=True,
+                       m2m_remote_columns='goods',
+                       m2m_local_columns='acting_op',
                        label="Goods record to apply the operation to")
 
     follows = Many2Many(model='Model.Wms.Operation',
                         # TODO this should be the same table as
                         # WorkingOn model
                         join_model=Wms.WorkingOn,
-                        m2m_remote_columns='previous_op_id',
-                        m2m_local_columns='acting_op_id',
+                        m2m_remote_columns='prev_op',
+                        m2m_local_columns='acting_op',
                         label="Immediate preceding operations",
                         )
     """Immediate predecessors in the Operation history,
