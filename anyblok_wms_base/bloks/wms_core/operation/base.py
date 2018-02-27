@@ -37,6 +37,43 @@ Wms = Declarations.Model.Wms
 NONZERO = NonZero()
 
 
+@Declarations.register(Wms)
+class WorkingOn:
+    """Internal table to help reconcile followed operations with their goods.
+
+    For Operations with multiple goods, tracking the followed operations and
+    the goods is not enough: we also need to record the original association
+    between them.
+    use case: oblivion.
+    """
+    acting_op = Many2One(model='Model.Wms.Operation',
+                         primary_key=True,
+                         index=True,
+                         foreign_key_options={'ondelete': 'cascade'})
+    """The Operation we are interested in."""
+
+    goods = Many2One(model='Model.Wms.Goods',
+                     primary_key=True,
+                     foreign_key_options={'ondelete': 'cascade'})
+    """One of the Goods record for the :attr:`acting Operation <acting_op>."""
+
+    prev_op = Many2One(model='Model.Wms.Operation')
+    """Previous operation that touched :attr:`goods`.
+
+    In other words, this is the operation that :attr:`acting_op` follows for
+    this :attr:`goods`.
+    """
+
+    orig_dt_until = DateTime(label="Original dt_until of goods")
+    """Saving the original ``dt_until`` value of the :attr:`goods`
+
+    This is needed to implement :ref:`oblivion op_revert_cancel_obliviate`,
+    since Operations can change ``dt_until`` without registering themselves
+    as their reason (normally, only in cases where ``dt_until`` is
+    theoretical, i.e ``state != past``).
+    """
+
+
 @register(Wms)
 class Operation:
     """Base class for all Operations.
@@ -98,7 +135,7 @@ class Operation:
     inputs = Many2Many(model='Model.Wms.Goods',
                        # TODO this should be the same table as
                        # WorkingOn model
-                       join_table='tmp_wms_operation_workingon',
+                       join_model=Wms.WorkingOn,
                        m2m_remote_columns='goods_id',
                        m2m_local_columns='acting_op_id',
                        label="Goods record to apply the operation to")
@@ -106,11 +143,10 @@ class Operation:
     follows = Many2Many(model='Model.Wms.Operation',
                         # TODO this should be the same table as
                         # WorkingOn model
-                        m2m_remote_columns='parent_id',
-                        m2m_local_columns='child_id',
-                        join_table='wms_operation_history',
+                        join_model=Wms.WorkingOn,
+                        m2m_remote_columns='previous_op_id',
+                        m2m_local_columns='acting_op_id',
                         label="Immediate preceding operations",
-                        many2many="followers",
                         )
     """Immediate predecessors in the Operation history,
 
@@ -683,44 +719,3 @@ class Operation:
         """
         raise NotImplementedError(
             "for %s" % self.__registry_name__)  # pragma: no cover
-
-
-@Declarations.register(Wms.Operation)
-class WorkingOn:
-    """Internal table to help reconcile followed operations with their goods.
-
-    For Operations with multiple goods, tracking the followed operations and
-    the goods is not enough: we also need to record the original association
-    between them.
-    use case: oblivion.
-    """
-    # TODO apparently, I can't readily construct a multiple primary key
-    # from the m2o relationships
-    id = Integer(primary_key=True)
-    acting_op = Many2One(model='Model.Wms.Operation',
-                         index=True,
-                         foreign_key_options={'ondelete': 'cascade'})
-    """The Operation we are interested in."""
-
-    goods = Many2One(model='Model.Wms.Goods',
-                     foreign_key_options={'ondelete': 'cascade'})
-    """One of the Goods record for the :attr:`acting Operation <acting_op>."""
-
-    orig_reason = Many2One(model='Model.Wms.Operation',
-                           foreign_key_options={'ondelete': 'cascade'})
-    """Saving the original ``reason`` value of the :attr:`Goods <goods>`
-
-    This is needed to implement :ref:`oblivion op_revert_cancel_obliviate`
-
-    TODO we hope to supersede this while implementing
-    :ref:`Avatars <improvement_avatars>`.
-    """
-
-    orig_dt_until = DateTime(label="Original dt_until of goods")
-    """Saving the original ``dt_until`` value of the :attr:`Goods <goods>`
-
-    This is needed to implement :ref:`oblivion op_revert_cancel_obliviate`
-
-    TODO we hope to supersede this while implementing
-    :ref:`Avatars <improvement_avatars>`.
-    """
