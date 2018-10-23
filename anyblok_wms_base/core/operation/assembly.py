@@ -247,7 +247,10 @@ class Assembly(Operation):
                 cls,
                 "No such assembly: {name!r} for type {outcome_type!r}",
                 name=name, outcome_type=outcome_type)
+        cls.check_inputs_locations(inputs)
 
+    @classmethod
+    def check_inputs_locations(cls, inputs):
         loc = inputs[0].location
         if any(inp.location != loc for inp in inputs[1:]):
             raise OperationInputsError(
@@ -987,3 +990,15 @@ class Assembly(Operation):
         return self.registry.Wms.Operation.Unpack.create(
             dt_execution=dt_execution,
             inputs=unpack_inputs)
+
+    def input_location_altered(self):
+        """Being in-place, an Assembly must propagate changes of locations.
+
+        Also it should recheck that all inputs are in the same place.
+        """
+        self.check_inputs_locations(self.inputs)
+        outcome = self.outcomes[0]
+        outcome.location = self.inputs[0].location
+
+        for follower in self.followers:
+            follower.input_location_altered()
