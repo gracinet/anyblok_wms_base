@@ -631,18 +631,6 @@ class Operation:
                         "for inputs {inputs}",
                         inputs=inputs)
 
-    @property
-    def outcomes(self):
-        """Return the outcomes of the present operation.
-
-        Outcomes are the PhysObj Avatars that the current Operation produces.
-
-        This is a Python property, because it might become a field at some
-        point.
-        """
-        Avatar = self.registry.Wms.PhysObj.Avatar
-        return Avatar.query().filter_by(outcome_of=self).all()
-
     def after_insert(self):
         """Perform specific logic after insert during creation process
 

@@ -689,6 +689,7 @@ class Avatar:
     """
 
     outcome_of = Many2One(index=True,
+                          one2many='outcomes',
                           model=Model.Wms.Operation, nullable=False)
     """The Operation that created this Avatar.
     """
