@@ -73,6 +73,45 @@ class Move(Mixin.WmsSingleInputOperation, Operation):
 
         self.input.update(state='past', dt_until=dt_execution)
 
+    def start_planned(self):
+        dt_start = self.dt_start
+
+        after_move = self.outcomes[0]
+        after_move.update(dt_from=dt_start)
+        inp_av = self.input
+        inp_av.state = 'past'
+        # we don't want to create a hole in the time series for this
+        # physical object. TODO nocommit, this should be parametrizable
+        ancestor = self.registry.Wms.PhysObj.container_common_ancestor(
+            inp_av.location, self.destination)
+        if ancestor is None:
+            inp_av.dt_until = dt_start
+            return
+        # TODO, is it really reasonible to have two outcomes for  a Move ?
+        self.registry.Wms.PhysObj.Avatar.insert(
+            location=ancestor,
+            outcome_of=self,
+            state='present',
+            dt_from=dt_start,
+            dt_until=self.dt_execution,
+            obj=inp_av.obj)
+
+    def finish_started(self):
+        dt_exec = self.dt_execution
+
+        outcomes = self.outcomes
+        if len(outcomes) == 1:
+            after_move, temp_av = outcomes[0], None
+            self.input.update(dt_until=dt_exec)
+        elif outcomes[0].state == 'present':
+            temp_av, after_move = outcomes
+        else:
+            after_move, temp_av = outcomes
+
+        after_move.update(state='present', dt_from=dt_exec)
+        if temp_av is not None:
+            temp_av.update(state='past', dt_until=dt_exec)
+
     def is_reversible(self):
         """Moves are always reversible.
 

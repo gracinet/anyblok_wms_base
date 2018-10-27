@@ -6,6 +6,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+from datetime import timedelta
 from anyblok_wms_base.testing import WmsTestCaseWithPhysObj
 
 from anyblok_wms_base.exceptions import (
@@ -46,6 +47,41 @@ class TestMove(WmsTestCaseWithPhysObj):
         self.assertEqual(self.Avatar.query().filter(
             self.Avatar.location == self.incoming_loc,
             self.Avatar.state != 'past').count(), 0)
+
+    def test_start_finish(self):
+        self.avatar.dt_until = None
+        move = self.Move.create(destination=self.stock,
+                                state='planned',
+                                dt_execution=self.dt_test3,
+                                input=self.avatar)
+        self.assert_singleton(move.follows, value=self.arrival)
+        self.assertEqual(move.input, self.avatar)
+        moved = self.assert_singleton(move.outcomes)
+
+        self.avatar.update(state='present')
+
+        move.start(dt_start=self.dt_test3)
+        self.assertEqual(move.state, 'started')
+        self.assertEqual(self.avatar.state, 'past')
+        self.assertEqual(self.avatar.dt_until, self.dt_test3)
+
+        self.assert_singleton(move.outcomes, value=moved)
+        self.assertEqual(moved.state, 'future')
+        self.assertEqual(moved.dt_from, self.dt_test3)
+        self.assertEqual(moved.dt_until, None)
+        self.assertEqual(moved.location, self.stock)
+        self.assertEqual(self.Avatar.query().filter(
+            self.Avatar.location == self.incoming_loc,
+            self.Avatar.state != 'past').count(), 0)
+
+        dt_test4 = self.dt_test3 + timedelta(hours=1)
+        move.finish(dt_execution=dt_test4)
+
+        self.assertEqual(move.dt_execution, dt_test4)
+        self.assert_singleton(move.outcomes, value=moved)
+        self.assertEqual(moved.state, 'present')
+        self.assertEqual(moved.dt_from, dt_test4)
+        self.assertEqual(moved.dt_until, None)
 
     def test_whole_done(self):
         self.avatar.update(state='present')

@@ -391,6 +391,10 @@ class Operation:
     def execute(self, dt_execution=None):
         """Execute the operation.
 
+        This is a direct jump from the ``planned`` to the ``done`` state.
+        It should be equivalent yet a bit more efficient to calling
+        :meth:`start` and then immediately :meth:`finish`
+
         :param datetime dt_execution:
            the time at which execution happens.
            This parameter is meant for tests, or for callers doing bulk
@@ -410,6 +414,44 @@ class Operation:
         self.check_execute_conditions()
         self.execute_planned()
         self.state = 'done'
+
+    def start(self, dt_start=None):
+        """Start the operation, going from ``planned`` to ``started`` state.
+
+        :param datetime dt_start: the time at which the operation starts.
+                                  If omitted, defaults to the current date/time
+
+        This is an idempotent call: if the operation is already done
+        or started, nothing happens.
+        """
+        if self.state in ('started', 'done'):
+            return
+        if dt_start is None:
+            dt_start = datetime.now()
+        self.dt_start = dt_start
+        self.dt_execution = max(self.dt_execution, dt_start)
+        self.check_start_conditions()
+        self.start_planned()
+        self.state = 'started'
+
+    def finish(self, dt_execution=None):
+        """Finish the operation, going from ``started`` to ``done`` state.
+
+        :param datetime dt_execution:
+            the time at which the operation is finished.
+            If omitted, defaults to the current date/time
+
+        This is an idempotent call: if the operation is already done,
+        nothing happens.
+        """
+        if self.state == 'done':
+            return
+        if dt_execution is None:
+            dt_execution = datetime.now()
+        self.dt_execution = dt_execution
+        self.check_finish_conditions()
+        self.finish_started()
+        self.state = 'started'
 
     def cancel(self):
         """Cancel a planned operation and all its consequences.
@@ -651,10 +693,10 @@ class Operation:
         raise NotImplementedError  # pragma: no cover
 
     def check_execute_conditions(self):
-        """Used during execution to check that the Operation is indeed doable.
+        """Used during start and execute to guarantee their conditions.
 
-        In this default implementation, we check that all the :attr:`inputs`
-        are in the ``present`` state.
+        In this default implementation, we just check that all the
+        :attr:`inputs` are in the ``present`` state.
 
         Subclasses are welcome to override this, and will probably want to
         call it back, using ``super``.
@@ -667,7 +709,15 @@ class Operation:
             if record.state != 'present':
                 raise OperationInputWrongState(
                     self, record, 'present',
-                    prelude="Can't execute {operation}")
+                    prelude="Can't execute or start {operation}")
+
+    check_start_conditions = check_execute_conditions
+
+    def check_finish_conditions(self):
+        """Used upon finishing a started Operation to check it can be done.
+
+        In this default implementation, we do nothing.
+        """
 
     def execute_planned(self):
         """Execute an operation that has been up to now in the 'planned' state.
@@ -691,7 +741,58 @@ class Operation:
         not supposed to call this method: they should use :meth:`execute`,
         which takes care of all the above-mentioned preparations.
         """
-        raise NotImplementedError  # pragma: no cover
+        raise NotImplementedError(
+            "for %s" % self.__registry_name__)  # pragma: no cover
+
+    def start_planned(self):
+        """Start an operation that has been up to now in the 'planned' state.
+
+        To be implemented in subclasses.
+
+        This method does not have to care about the Operation state, which
+        the base class has already checked.
+
+        This method must correct the dates and times on the affected Avatars or
+        more broadly of any consequences of the theoretical execution date
+        and time that has been set during planning.
+        For that purpose, it can rely on the value of the :attr:`dt_start`
+        field to be now the final one (can be sooner or later than expected).
+
+        Normally, this method should not need either to perform any checks that
+        the execution can, indeed, be started: such subclasses-specific
+        tests are supposed to be done within :meth:`check_start_conditions`.
+
+        Downstream applications and libraries are
+        not supposed to call this method: they should use :meth:`start`,
+        which takes care of all the above-mentioned preparations.
+        """
+        raise NotImplementedError(
+            "for %s" % self.__registry_name__)  # pragma: no cover
+
+    def finish_started(self):
+        """Finish an operation that has been up to now in the 'started' state.
+
+        To be implemented in subclasses.
+
+        This method does not have to care about the Operation state, which
+        the base class has already checked.
+
+        This method must correct the dates and times on the affected Avatars or
+        more broadly of any consequences of the theoretical execution date
+        and time that has been set during planning.
+        For that purpose, it can rely on the value of the :attr:`dt_execution`
+        field to be now the final one (can be sooner or later than expected).
+
+        Normally, this method should not need either to perform any checks that
+        the execution can, indeed, be finished: such subclasses-specific
+        tests are supposed to be done within :meth:`check_finish_conditions`.
+
+        Downstream applications and libraries are
+        not supposed to call this method: they should use :meth:`finish`,
+        which takes care of all the above-mentioned preparations.
+        """
+        raise NotImplementedError(
+            "for %s" % self.__registry_name__)  # pragma: no cover
 
     def delete_outcomes(self):
         """Delete outcomes of the current Operation and their PhysObj if needed

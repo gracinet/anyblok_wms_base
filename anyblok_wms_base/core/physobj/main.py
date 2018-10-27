@@ -380,6 +380,31 @@ class PhysObj:
             obj=self, dt_until=None).filter(
                 Avatar.state.in_(('present', 'future'))).first()
 
+    def iter_loc_ancestors(self):
+        loc = self
+        while True:
+            yield loc
+            av = loc.current_avatar()
+            if av is None:
+                return
+            loc = av.location
+
+    @classmethod
+    def container_common_ancestor(cls, loc1, loc2):
+        # TODO stupid implementation (not today's goal)
+        ancestors1 = set()
+        ancestors2 = set()
+        for loc1, loc2 in zip(loc1.iter_loc_ancestors(loc1),
+                              loc2.iter_loc_ancestors(loc2)):
+            if loc1 in ancestors2:
+                return loc1
+            if loc2 in ancestors1:
+                return loc2
+            if loc1 is not None:
+                ancestors1.add(loc1)
+            if loc2 is not None:
+                ancestors2.add(loc2)
+
 
 _empty_dict = {}
 
