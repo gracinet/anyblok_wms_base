@@ -84,7 +84,6 @@ class Split(SingleInput, Operation):
                 "quantity={self.quantity}").format(self=self)
 
     def after_insert(self):
-        self.registry.flush()
         avatar = self.input
         phobj = avatar.obj
         qty = self.quantity
@@ -149,9 +148,7 @@ class Split(SingleInput, Operation):
     def execute_planned(self):
         for outcome in self.outcomes:
             outcome.update(state='present', dt_from=self.dt_execution)
-        self.registry.flush()
         self.input.update(state='past', dt_until=self.dt_execution)
-        self.registry.flush()
 
     def is_reversible(self):
         """Reversibility depends on the relevant PhysObj Type.

@@ -124,7 +124,6 @@ class Aggregate(Operation):
         """
         # TODO find a way to pass the actual wished PhysObj up to here, then
         # use it (to maintain PhysObj record in case of reverts)
-        self.registry.flush()
         inputs = self.inputs
         dt_exec = self.dt_execution
         PhysObj = self.registry.Wms.PhysObj

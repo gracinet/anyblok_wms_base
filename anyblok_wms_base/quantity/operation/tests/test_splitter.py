@@ -63,7 +63,6 @@ class TestSplitterOperation(WmsTestCaseWithPhysObj):
         self.assertEqual(move.input, self.avatar)
         self.avatar.state = 'present'
         self.physobj.quantity = 2
-        self.registry.flush()
         with self.assertRaises(OperationQuantityError) as arc:
             move.execute()
         exc = arc.exception
@@ -85,7 +84,6 @@ class TestSplitterOperation(WmsTestCaseWithPhysObj):
         move.input.obj.quantity = 3
 
         self.avatar.state = 'present'
-        self.registry.flush()
         with self.assertRaises(OperationQuantityError) as arc:
             move.execute()
         exc = arc.exception

@@ -369,7 +369,6 @@ class TestUnpack(WmsTestCase):
                              additional_states=['future'])
 
         self.packs.state = 'present'
-        self.registry.flush()
         unp.execute()
         self.assertEqual(avatar.state, 'present')
         self.assertEqual(self.packs.state, 'past')

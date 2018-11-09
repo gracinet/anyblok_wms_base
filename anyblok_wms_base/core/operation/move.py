@@ -91,8 +91,6 @@ class Move(Mixin.WmsSingleInputOperation, Operation):
 
         after_move = self.outcomes[0]
         after_move.update(state='present', dt_from=dt_execution)
-        self.registry.flush()
-
         self.input.update(state='past', dt_until=dt_execution)
 
     def is_reversible(self):

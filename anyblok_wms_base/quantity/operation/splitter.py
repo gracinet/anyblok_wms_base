@@ -140,7 +140,6 @@ class WmsSplitterOperation:
             split_op = next(iter(self.follows))
             split_op.execute(dt_execution=self.dt_execution)
         super(WmsSplitterOperation, self).execute_planned()
-        self.registry.flush()
 
 
 Operation = Declarations.Model.Wms.Operation
