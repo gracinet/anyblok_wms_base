@@ -142,15 +142,23 @@ class Action:
         """
         PhysObj = self.registry.Wms.PhysObj
         Avatar = PhysObj.Avatar
-        avatars = (Avatar.query()
-                   .filter_by(location=self.location,
-                              state='present')
-                   .join(PhysObj, Avatar.obj_id == PhysObj.id)
-                   .filter(PhysObj.type == self.physobj_type,
-                           PhysObj.code == self.physobj_code)
-                   .limit(self.quantity)
-                   .all()
-                   )
+        avatars_q = (Avatar.query()
+                     .filter_by(location=self.location,
+                                state='present')
+                     .join(PhysObj, Avatar.obj_id == PhysObj.id)
+                     .filter(PhysObj.type == self.physobj_type,
+                             PhysObj.code == self.physobj_code)
+                     )
+        Reservation = getattr(self.registry.Wms, 'Reservation', None)
+        if Reservation is not None:
+            avatars_q = (avatars_q
+                         .outerjoin(Reservation,
+                                    Reservation.physobj_id == Avatar.obj_id)
+                         .outerjoin(Reservation.request_item)
+                         .order_by(Reservation.RequestItem.request_id.desc()))
+
+        avatars = avatars_q.limit(self.quantity).all()
+
         # TODO precise exc
         if len(avatars) != self.quantity:
             raise ValueError("Couldn't find enough Avatars (only %d over %d) "
