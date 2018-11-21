@@ -144,3 +144,15 @@ Mixin.WmsSingleOutcomeOperation: producing only one outcome
             Specific methods.</h4>
 
    .. automethod:: refine_with_trailing_move
+
+Mixin.WmsInventoryOperation: common logic of inventory Operations
+-----------------------------------------------------------------
+
+.. autoclass:: anyblok_wms_base.core.operation.inventory.WmsInventoryOperation
+
+
+   .. raw:: html
+
+      <h4>Optional API of subclasses</h4>
+
+   .. automethod:: check_create_conditions
