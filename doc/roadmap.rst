@@ -15,4 +15,5 @@ updated along the way.
 1.0.0
 ~~~~~
 * API stability: abiding to `Semantic versioning rules <https://semver.org/>`_
-* Some performance tuning
+* Basic performance tuning: database indexes etc.
+* :ref:`improvement_indeterminate_avatars`
