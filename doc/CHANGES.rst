@@ -1,6 +1,6 @@
 .. This file is a part of the AnyBlok / WMS Base project
 ..
-..    Copyright (C) 2018 Georges Racinet <gracinet@anybox.fr>
+..    Copyright (C) 2018, 2019 Georges Racinet <georges.racinet@octobus.net>
 ..
 .. This Source Code Form is subject to the terms of the Mozilla Public License,
 .. v. 2.0. If a copy of the MPL was not distributed with this file,You can
@@ -12,6 +12,12 @@ Release history
 0.9.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
+* Alteration of planned Operations (fairly advanced, not comprehensive
+  yet). This gives the system the needed flexibility to adjust to
+  real-world constraints. From now on, the message for application
+  developers will be to plan coarsely and refine later.
+* High level inventory facilities: the new `wms-inventory` Blok
+* doc: contributor's guide
 * Database constraints:
 
   + consistency of date/time ranges of Avatars.
@@ -20,7 +26,7 @@ Release history
     (see also https://github.com/AnyBlok/anyblok_wms_base/issues/8).
   + at most one Avatar in the ``present`` state for a given physical object.
 
-* doc: contributor's guide
+* PyPy 3.5 compatibility and its enforcement through CI
 
 0.8.0
 ~~~~~
